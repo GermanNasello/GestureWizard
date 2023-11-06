@@ -98,7 +98,6 @@ while True:
                       #(0, 0, 255), 1, cv2.LINE_AA)
             i+=1
 
-        #print(comprobar_mano(resultsmanos.multi_hand_landmarks[0]))
 
         if funcionando!=None :
             master=None
@@ -155,17 +154,6 @@ while True:
                         contador[pos]=1
 
 
-
-
-    #if resultspose.pose_landmarks:
-        #print(resultspose.pose_landmarks.landmark[0].x)
-        #mp_drawing.draw_landmarks(
-         #   image,
-          #  resultspose.pose_landmarks,
-           # mppose.POSE_CONNECTIONS
-        #)
-    #if resultsmanos.multi_hand_landmarks and resultspose.pose_landmarks:
-      #   print(distance(resultspose.pose_landmarks,resultsmanos.multi_hand_landmarks[0],7,8))
     cv2.imshow("PRUEBA3", image)
     cv2.waitKey(2)
 
