@@ -57,14 +57,14 @@ while True:
                         if(movimiento=="derecha"):
                             try:
                                 controller.subir_volumen()
-                            else:
+                            except:
                                 controller.set_volumen(1)
                                 print("Está al maximo")
 
                         elif(movimiento=="izquierda"):
                             try:
                                 controller.bajar_volumen()
-                            else:
+                            except:
                                 controller.set_volumen(0)
                                 print("Está al minimo")
                         else:
