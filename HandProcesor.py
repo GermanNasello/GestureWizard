@@ -1,5 +1,7 @@
 Class Hand():
-
+  def __init__():
+    self.posiciones=[]
+    self.movimiento=[0,0]
 ########################################
   def distance(v1,v2,p1,p2):
     return math.sqrt(math.pow(v1.landmark[p1].x - v2.landmark[p2].x, 2) + math.pow(v1.landmark[p1].y - v2.landmark[p2].y, 2))
@@ -44,3 +46,29 @@ Class Hand():
                 mphands.HAND_CONNECTIONS
             )
   return image
+
+########################################
+
+  def guardarPosicion(mano, p):
+    self.posiciones.append([mano.landmark[p].x, mano.landmark[p].y])
+
+
+########################################
+
+  def procesarMovimiento():
+    self.movimientos=[0,0]
+    for i in range(1, len(self.posiciones):
+      self.movimiento[0]+= self.posiciones[i][0]-self.posiciones[i-1][0]
+      self.movimiento[1]+= self.posiciones[i][1]-self.posiciones[i-1][1]
+    self.posiciones=[]
+    if abs(self.movimiento[0]) > abs(self.movimiento[1]):
+      if(self.movimiento[0]>0):
+        return "derecha"
+      else:
+        return "izquierda"
+    else:
+      if (self.movimiento[1]>0):
+        return "arriba"
+      else:
+        return "abajo"
+     
