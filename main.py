@@ -38,7 +38,7 @@ while True:
         if funcionando!=None :
             master=None
             for mano in resultsmanos.multi_hand_landmarks:
-                if comprobar_mano(mano)==funcionando:
+                if hp.comprobar_mano(mano)==funcionando:
                     master = mano
                     break
             if(master==None):
@@ -77,7 +77,7 @@ while True:
                 
         if funcionando==None:
             for mano in resultsmanos.multi_hand_landmarks:
-                pos = comprobar_mano(mano)
+                pos = hp.comprobar_mano(mano)
                 if pos in ["00110","01110"]:
                     try:
                         contador[pos]+=1
@@ -90,6 +90,6 @@ while True:
                         contador[pos]=1
 
 
-    cv2.imshow("PRUEBA3", image)
+    cv2.imshow("GestureWizard", image)
     cv2.waitKey(2)
 
