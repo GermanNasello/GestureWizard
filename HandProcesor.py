@@ -1,36 +1,38 @@
-Class Hand():
-  def __init__():
+import math
+
+class Hand():
+  def __init__(self):
     self.posiciones=[]
     self.movimiento=[0,0]
 ########################################
-  def distance(v1,v2,p1,p2):
+  def distance(self,v1,v2,p1,p2):
     return math.sqrt(math.pow(v1.landmark[p1].x - v2.landmark[p2].x, 2) + math.pow(v1.landmark[p1].y - v2.landmark[p2].y, 2))
 
 ########################################
-  def comprobar_mano(m):
+  def comprobar_mano(self,m):
       res=""
   
-      if distance(m, m, 4, 17) < distance(m, m, 2, 4):
+      if self.distance(m, m, 4, 17) < self.distance(m, m, 2, 4):
           res+='1'
       else:
           res+='0'
   
-      if distance(m, m, 0, 8) < distance(m, m, 0, 6):
+      if self.distance(m, m, 0, 8) < self.distance(m, m, 0, 6):
           res+= '1'
       else:
           res+= '0'
   
-      if distance(m, m, 0, 12) < distance(m, m, 0, 9):
+      if self.distance(m, m, 0, 12) < self.distance(m, m, 0, 9):
           res+= '1'
       else:
           res+= '0'
   
-      if distance(m, m, 0, 16) < distance(m, m, 0, 13):
+      if self.distance(m, m, 0, 16) < self.distance(m, m, 0, 13):
           res+= '1'
       else:
           res+= '0'
   
-      if distance(m, m, 0, 20) < distance(m, m, 0, 17):
+      if self.distance(m, m, 0, 20) < self.distance(m, m, 0, 17):
           res+= '1'
       else:
           res+= '0'
@@ -38,26 +40,26 @@ Class Hand():
       return res
 ########################################
 
-  def mostrarPuntos(resultmanos, mp_drawing, image):
-    for hand_landmarks in resultsmanos.multi_hand_landmarks:
+  def mostrarPuntos(self, resultsmanos, mp_drawing, image, mphands):
+    for hand_landmarks in resultsmanos:
             mp_drawing.draw_landmarks(
                 image,
                 hand_landmarks,
                 mphands.HAND_CONNECTIONS
             )
-  return image
+    return image
 
 ########################################
 
-  def guardarPosicion(mano, p):
+  def guardarPosicion(self, mano, p):
     self.posiciones.append([mano.landmark[p].x, mano.landmark[p].y])
 
 
 ########################################
 
-  def procesarMovimiento():
+  def procesarMovimiento(self):
     self.movimientos=[0,0]
-    for i in range(1, len(self.posiciones):
+    for i in range(1, len(self.posiciones)):
       self.movimiento[0]+= self.posiciones[i][0]-self.posiciones[i-1][0]
       self.movimiento[1]+= self.posiciones[i][1]-self.posiciones[i-1][1]
     self.posiciones=[]

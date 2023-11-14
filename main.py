@@ -11,12 +11,10 @@ cap = cv2.VideoCapture(0)
 manos = mphands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 pose = mppose.Pose()
 
-devices = AudioUtilities.GetSpeakers()
-interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-volume = cast(interface, POINTER(IAudioEndpointVolume))
 
-controller = Controller()
-hp = HandProcesor()
+
+controller = Controller.Controller()
+hp = HandProcesor.Hand()
 
 contador=dict()
 funcionando=None
@@ -24,6 +22,35 @@ humbral_inicio=2
 humbral_fin=2
 
 return_counter=humbral_fin
+
+
+def fin():
+    global funcionando
+    if funcionando == "00110":
+        controller.mute()
+        funcionando = None
+        hp.posiciones=[]
+    else:
+        funcionando = None
+        print("Fin de trackeo, procesar movimiento")
+        movimiento = hp.procesarMovimiento()
+        if(movimiento=="derecha"):
+            try:
+                controller.subir_volumen()
+            except:
+                controller.set_volumen(1)
+                print("Está al maximo")
+        elif(movimiento=="izquierda"):
+            try:
+                controller.bajar_volumen()
+            except:
+                controller.set_volumen(0)
+                print("Está al minimo")
+        else:
+             print(movimiento)
+
+
+
 
 while True:
     data, image = cap.read()
@@ -33,7 +60,7 @@ while True:
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     if resultsmanos.multi_hand_landmarks:
         
-        image = hp.mostrarPuntos()
+        image = hp.mostrarPuntos(resultsmanos.multi_hand_landmarks, mp_drawing, image, mphands)
         
         if funcionando!=None :
             master=None
@@ -44,31 +71,7 @@ while True:
             if(master==None):
                 
                 if ((return_counter:=return_counter-1)<=0):
-                    if funcionando == "00110":
-                        controller.mute()
-                        funcionando = None
-                        hp.posiciones=[]
-                    else:
-                        funcionando = None
-                        print("Fin de trackeo, procesar movimiento")
-                        movimiento = hp.procesarMovimiento()
-                        print(movimiento)
-
-                        if(movimiento=="derecha"):
-                            try:
-                                controller.subir_volumen()
-                            except:
-                                controller.set_volumen(1)
-                                print("Está al maximo")
-
-                        elif(movimiento=="izquierda"):
-                            try:
-                                controller.bajar_volumen()
-                            except:
-                                controller.set_volumen(0)
-                                print("Está al minimo")
-                        else:
-                            print(movimiento)
+                    fin()
                     
             else:
                 print("Guardando posicion")
@@ -89,7 +92,10 @@ while True:
                     except KeyError:
                         contador[pos]=1
 
-
+    else:
+        if ((return_counter:=return_counter-1)<=0 and funcionando!=None):
+            print("Fin por fuera de foco")
+            fin()
     cv2.imshow("GestureWizard", image)
     cv2.waitKey(2)
 
