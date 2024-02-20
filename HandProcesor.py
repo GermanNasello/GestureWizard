@@ -54,27 +54,23 @@ class Hand():
   def guardarPosicion(self, mano, p):
     self.posiciones.append([mano.landmark[p].x, mano.landmark[p].y])
 
-  def reset(self):
-    self.posiciones=[]
-    self.movimiento=[0,0]
+
 ########################################
 
   def procesarMovimiento(self):
-    self.movimiento=[0,0]
-        
+    self.movimientos=[0,0]
     for i in range(1, len(self.posiciones)):
       self.movimiento[0]+= self.posiciones[i][0]-self.posiciones[i-1][0]
       self.movimiento[1]+= self.posiciones[i][1]-self.posiciones[i-1][1]
     self.posiciones=[]
-    print(self.movimiento)
     if abs(self.movimiento[0]) > abs(self.movimiento[1]):
       if(self.movimiento[0]>0):
-        return "derecha"
+        return "R"
       else:
-        return "izquierda"
+        return "L"
     else:
       if (self.movimiento[1]>0):
-        return "arriba"
+        return "U"
       else:
-        return "abajo"
+        return "D"
      
