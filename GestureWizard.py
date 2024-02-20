@@ -14,12 +14,26 @@ class GestureWizard():
         self.min_detection_confidence = config["min_detection_confidence"]
         self.min_tracking_confidence = config["min_tracking_confidence"]
 
+        with open("acciones.json","r") as archivo_json:
+            self.catalogo_gestos=json.load(archivo_json)
+
+        for key in list(self.catalogo_gestos.keys()):
+            if key[5] == 'X':
+                self.catalogo_gestos[key[:5] + 'L'] = self.catalogo_gestos[key]
+                self.catalogo_gestos[key[:5] + 'U'] = self.catalogo_gestos[key]
+                self.catalogo_gestos[key[:5] + 'R'] = self.catalogo_gestos[key]
+                self.catalogo_gestos[key[:5] + 'D'] = self.catalogo_gestos[key]
+
+
+                
+
     def __init__(self):
         print("CARGANDO LA MAGIA")
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.mphands = mp.solutions.hands
         self.mppose = mp.solutions.pose
+        self.catalogo_gestos = []
 
         self.load()
 
@@ -39,29 +53,24 @@ class GestureWizard():
 
 
     def fin(self):
-        print("\n\nFINFINFIN\n\n")
-        if self.funcionando == "00110":
-            self.controller.mute()
-            self.funcionando = None
-            self.hp.posiciones = []
-        else:
-            self.funcionando = None
-            print("Fin de trackeo, procesar movimiento")
-            movimiento = self.hp.procesarMovimiento()
-            if (movimiento == "derecha"):
-                try:
-                    self.controller.subir_volumen()
-                except:
-                    self.controller.set_volumen(1)
-                    print("Está al maximo")
-            elif (movimiento == "izquierda"):
-                try:
-                    self.controller.bajar_volumen()
-                except:
-                    self.controller.set_volumen(0)
-                    print("Está al minimo")
+        print("Fin de trackeo, procesar movimiento")
+        movimiento = self.hp.procesarMovimiento()
+        gesto_completo=self.funcionando+movimiento
+
+        
+        if gesto_completo in self.catalogo_gestos.keys():
+            if self.catalogo_gestos[gesto_completo] == "VOLUP":
+                self.controller.subir_volumen()
+            elif self.catalogo_gestos[gesto_completo] == "VOLDOWN":
+                self.controller.bajar_volumen()
+            elif self.catalogo_gestos[gesto_completo] == "MUTE":
+                self.controller.mute()
             else:
-                print(movimiento)
+                path = self.catalogo_gestos[gesto_completo]
+                print(f"Se ejecuta el os.system({path})")
+                
+        
+        self.funcionando = None
 
     def run(self):
         data, image = self.cap.read()
@@ -93,16 +102,17 @@ class GestureWizard():
             if self.funcionando == None:
                 for mano in resultsmanos.multi_hand_landmarks:
                     pos = self.hp.comprobar_mano(mano)
-                    if pos in ["00110", "01110"]:
-                        try:
-                            self.contador[pos] += 1
-                            if (self.contador[pos]) >= self.humbral_inicio:
-                                self.funcionando = pos
-                                self.contador.clear()
-                                print("la funcion actual es " + pos)
-                                break
-                        except KeyError:
-                            self.contador[pos] = 1
+                    for posiciones_esperadas in self.catalogo_gestos.keys():
+                        if pos == posiciones_esperadas[:5]:
+                            try:
+                                self.contador[pos] += 1
+                                if (self.contador[pos]) >= self.humbral_inicio:
+                                    self.funcionando = pos
+                                    self.contador.clear()
+                                    print("la funcion actual es " + pos)
+                                    break
+                            except KeyError:
+                                self.contador[pos] = 1
 
         else:
             self.return_counter-=1

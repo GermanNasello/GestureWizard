@@ -18,11 +18,17 @@ class Controller():
       self.volume.SetMasterVolumeLevelScalar(new_volume, None)
   
   def subir_volumen(self):
-      current_volume = self.volume.GetMasterVolumeLevelScalar()
-      new_volume = current_volume+0.35  # 70% del volumen máximo
-      self.volume.SetMasterVolumeLevelScalar(new_volume, None)
+      try:
+        current_volume = self.volume.GetMasterVolumeLevelScalar()
+        new_volume = current_volume+0.35  # 70% del volumen máximo
+        self.volume.SetMasterVolumeLevelScalar(new_volume, None)
+      except:
+        print("Esta al maximo")
   
   def bajar_volumen(self):
-      current_volume = self.volume.GetMasterVolumeLevelScalar()
-      new_volume = current_volume-0.35# 70% del volumen máximo
-      self.volume.SetMasterVolumeLevelScalar(new_volume, None)
+      try:
+        current_volume = self.volume.GetMasterVolumeLevelScalar()
+        new_volume = current_volume-0.35# 70% del volumen máximo
+        self.volume.SetMasterVolumeLevelScalar(new_volume, None)
+      except:
+        print("Esta al minimo")

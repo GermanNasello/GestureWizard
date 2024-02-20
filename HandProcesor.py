@@ -65,12 +65,12 @@ class Hand():
     self.posiciones=[]
     if abs(self.movimiento[0]) > abs(self.movimiento[1]):
       if(self.movimiento[0]>0):
-        return "derecha"
+        return "R"
       else:
-        return "izquierda"
+        return "L"
     else:
       if (self.movimiento[1]>0):
-        return "arriba"
+        return "U"
       else:
-        return "abajo"
+        return "D"
      
