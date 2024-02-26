@@ -6,7 +6,12 @@ import json
 
 class GestureWizard():
 
+    def toggle(self):
+        self.running = not self.running
+        print(f"El programa esta en funcionamiento: {self.running}")
+
     def load(self):
+        print("Cargando config")
         with open("config.json", "r") as archivo_json:
             config = json.load(archivo_json)
         self.humbral_inicio=config["humbral_inicio"]
@@ -50,6 +55,7 @@ class GestureWizard():
 
         self.return_counter = self.humbral_fin
 
+        self.running=True
 
 
     def fin(self):
@@ -57,6 +63,7 @@ class GestureWizard():
         movimiento = self.hp.procesarMovimiento()
         gesto_completo=self.funcionando+movimiento
 
+        print(f"Gesto completo: {gesto_completo}")
         
         if gesto_completo in self.catalogo_gestos.keys():
             if self.catalogo_gestos[gesto_completo] == "VOLUP":
@@ -73,53 +80,55 @@ class GestureWizard():
         self.funcionando = None
 
     def run(self):
-        data, image = self.cap.read()
-        image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-        resultsmanos = self.manos.process(image)
-        resultspose = self.pose.process(image)
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        if self.running:
 
-        if resultsmanos.multi_hand_landmarks:
+            data, image = self.cap.read()
+            image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+            resultsmanos = self.manos.process(image)
+            resultspose = self.pose.process(image)
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-            image = self.hp.mostrarPuntos(resultsmanos.multi_hand_landmarks, self.mp_drawing, image, self.mphands)
+            if resultsmanos.multi_hand_landmarks:
 
-            if self.funcionando != None:
-                self.master = None
-                for mano in resultsmanos.multi_hand_landmarks:
-                    if self.hp.comprobar_mano(mano) == self.funcionando:
-                        self.master = mano
-                        break
-                if (self.master == None):
-                    self.return_counter-=1
-                    if (self.return_counter <= 0):
-                        self.fin()
+                image = self.hp.mostrarPuntos(resultsmanos.multi_hand_landmarks, self.mp_drawing, image, self.mphands)
 
-                else:
-                    print("Guardando posicion")
-                    self.hp.guardarPosicion(self.master, 0)
-                    self.return_counter = self.humbral_fin
+                if self.funcionando != None:
+                    self.master = None
+                    for mano in resultsmanos.multi_hand_landmarks:
+                        if self.hp.comprobar_mano(mano) == self.funcionando:
+                            self.master = mano
+                            break
+                    if (self.master == None):
+                        self.return_counter-=1
+                        if (self.return_counter <= 0):
+                            self.fin()
 
-            if self.funcionando == None:
-                for mano in resultsmanos.multi_hand_landmarks:
-                    pos = self.hp.comprobar_mano(mano)
-                    for posiciones_esperadas in self.catalogo_gestos.keys():
-                        if pos == posiciones_esperadas[:5]:
-                            try:
-                                self.contador[pos] += 1
-                                if (self.contador[pos]) >= self.humbral_inicio:
-                                    self.funcionando = pos
-                                    self.contador.clear()
-                                    print("la funcion actual es " + pos)
-                                    break
-                            except KeyError:
-                                self.contador[pos] = 1
+                    else:
+                        print("Guardando posicion")
+                        self.hp.guardarPosicion(self.master, 0)
+                        self.return_counter = self.humbral_fin
 
-        else:
-            self.return_counter-=1
-            for key in self.contador.keys():
-                self.contador[key]-=1
-            if (self.return_counter <= 0 and self.funcionando != None):
-                print("Fin por fuera de foco")
-                self.fin()
-        cv2.imshow("GestureWizard", image)
-        cv2.waitKey(2)
+                if self.funcionando == None:
+                    for mano in resultsmanos.multi_hand_landmarks:
+                        pos = self.hp.comprobar_mano(mano)
+                        for posiciones_esperadas in self.catalogo_gestos.keys():
+                            if pos == posiciones_esperadas[:5]:
+                                try:
+                                    self.contador[pos] += 1
+                                    if (self.contador[pos]) >= self.humbral_inicio:
+                                        self.funcionando = pos
+                                        self.contador.clear()
+                                        print("la funcion actual es " + pos)
+                                        break
+                                except KeyError:
+                                    self.contador[pos] = 1
+
+            else:
+                self.return_counter-=1
+                for key in self.contador.keys():
+                    self.contador[key]-=1
+                if (self.return_counter <= 0 and self.funcionando != None):
+                    print("Fin por fuera de foco")
+                    self.fin()
+            cv2.imshow("GestureWizard", image)
+            cv2.waitKey(2)
