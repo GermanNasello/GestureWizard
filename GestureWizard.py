@@ -6,15 +6,23 @@ import json
 
 class GestureWizard():
 
+    """     
+    Funcion de cambio de estado de ejecucion
+    """
     def toggle(self):
         self.running = not self.running
         print(f"El programa esta en funcionamiento: {self.running}")
 
+
+    """
+    Cargar la configuracion y las acciones desde los JSON 
+    """
     def load(self):
         print("Cargando config")
         with open("config.json", "r") as archivo_json:
             config = json.load(archivo_json)
-        self.humbral_inicio=config["humbral_inicio"]
+            
+        self.humbral_inicio=config["humbral_inicio"]    # Los JSON son diccionarios    
         self.humbral_fin=config["humbral_fin"]
         self.min_detection_confidence = config["min_detection_confidence"]
         self.min_tracking_confidence = config["min_tracking_confidence"]
@@ -23,7 +31,7 @@ class GestureWizard():
             self.catalogo_gestos=json.load(archivo_json)
 
         for key in list(self.catalogo_gestos.keys()):
-            if key[5] == 'X':
+            if key[5] == 'X':        # En caso de que el gesto se quiera hacer hacia cualquier movimiento, se añade a las acciones conocidas en todas las direcciones (Para aligerar la decision en la funcion fin)
                 self.catalogo_gestos[key[:5] + 'L'] = self.catalogo_gestos[key]
                 self.catalogo_gestos[key[:5] + 'U'] = self.catalogo_gestos[key]
                 self.catalogo_gestos[key[:5] + 'R'] = self.catalogo_gestos[key]
@@ -31,7 +39,9 @@ class GestureWizard():
 
 
                 
-
+    """
+    Rutina de inicio, creacion de variables, cargar configuracion
+    """
     def __init__(self):
         print("CARGANDO LA MAGIA")
         self.mp_drawing = mp.solutions.drawing_utils
@@ -57,28 +67,22 @@ class GestureWizard():
 
         self.running=True
 
+    """
+    Ejecucion principal del programa, captura una imagen, detecta manos, comprueba posicion de las manos,
+    
+    Si esta seleccionada una posicion de mano: 
+            - Se busca la mano con la posicion seleccionada.
+            - Si la encuentra guarda la posicion de la mano y sale de los bucles
+            - Si no la encuentra decrementa el contador de retorno. Si este es 0 llama a la funcion fin
 
-    def fin(self):
-        print("Fin de trackeo, procesar movimiento")
-        movimiento = self.hp.procesarMovimiento()
-        gesto_completo=self.funcionando+movimiento
-
-        print(f"Gesto completo: {gesto_completo}")
-        
-        if gesto_completo in self.catalogo_gestos.keys():
-            if self.catalogo_gestos[gesto_completo] == "VOLUP":
-                self.controller.subir_volumen()
-            elif self.catalogo_gestos[gesto_completo] == "VOLDOWN":
-                self.controller.bajar_volumen()
-            elif self.catalogo_gestos[gesto_completo] == "MUTE":
-                self.controller.mute()
-            else:
-                path = self.catalogo_gestos[gesto_completo]
-                print(f"Se ejecuta el os.system({path})")
-                
-        
-        self.funcionando = None
-
+    Si no esta seleccionada ninguna posicion de mano;
+            - Por cada mano se comprueba la posicion de los dedos
+            - Se comprueba si una de las posiciones esta dentro de las posiciones de la lista de acciones
+            - Se crea/aumenta el contador para esa posicion en concreto
+            - Si el valor de esa posicion esta dentro del humbral de inicio se selecciona una posicion de la mano, se borra el contador y se sale de los bucles
+    
+    Si no se ha detectado ninguna mano se decrementan los contadores de cada posicion y el contador de retorno
+    """
     def run(self):
         if self.running:
 
@@ -132,3 +136,24 @@ class GestureWizard():
                     self.fin()
             cv2.imshow("GestureWizard", image)
             cv2.waitKey(2)
+
+    def fin(self):
+        print("Fin de trackeo, procesar movimiento")
+        movimiento = self.hp.procesarMovimiento()
+        gesto_completo=self.funcionando+movimiento
+
+        print(f"Gesto completo: {gesto_completo}")
+        
+        if gesto_completo in self.catalogo_gestos.keys():
+            if self.catalogo_gestos[gesto_completo] == "VOLUP":
+                self.controller.subir_volumen()
+            elif self.catalogo_gestos[gesto_completo] == "VOLDOWN":
+                self.controller.bajar_volumen()
+            elif self.catalogo_gestos[gesto_completo] == "MUTE":
+                self.controller.mute()
+            else:
+                path = self.catalogo_gestos[gesto_completo]
+                print(f"Se ejecuta el os.system({path})")
+                
+        
+        self.funcionando = None
