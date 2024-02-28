@@ -25,15 +25,21 @@ class GUI():
 
         self.root.mainloop()
 
-
+"""
+Cambia la variable de funcionamiento del software de handtracking
+"""
     def toggle_run(self):
         self.gw.toggle()
-        print("Esto va a cambiar si el programa corre o no")
+#        print("Esto va a cambiar si el programa corre o no")
 
+
+"""
+Añade una linea a la lista de comandos de la configuracion
+"""
     def anadir(self):
         self.linea=len(self.labelframe)
         self.btn_anadir.destroy()
-        self.btn_guardar.destroy()
+        self.btn_guardar.destroy()   
 
         self.pos_dedos.append([None,None,None,None,None])
         self.movimiento.append(None)
@@ -88,7 +94,7 @@ class GUI():
         mov_texto.grid(column=7, row=0, padx=20, pady=20)
 
         self.accion[self.linea] = ttk.Combobox(self.labelframe[self.linea], state="readonly", values=["VOLUP", "VOLDOWN", "MUTE","OTRO"])
-        self.accion[self.linea].bind("<<ComboboxSelected>>", lambda event, arg1=self.linea: self.aparicion_btn(arg1))
+        self.accion[self.linea].bind("<<ComboboxSelected>>", lambda event, arg1=self.linea: self.aparicion_btn(arg1))  # Al seleccionar un valor se llama a la funcion de aparicion de boton de seleccion
 
         self.accion[self.linea].grid(column=7, row=1, padx=10, pady=10)
 
@@ -99,53 +105,54 @@ class GUI():
         self.btn_guardar = ttk.Button(self.newWindow,text="Guardar", command=self.guardar)
         self.btn_guardar.grid(column=2, row =self.linea+1, padx =1,pady=1)
 
+
+"""
+Comprobar si en la linea "cont" el valor de accion seleccionado es OTRO
+"""
     def aparicion_btn(self,cont):
         btn_seleccion=None
-        try:
+        try:            # En algun momento ha fallado, no se porque por lo que pongo un try
             if (self.accion[cont].get()=="OTRO"):
-                btn_seleccion = ttk.Button(self.labelframe[cont], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(cont))
+                btn_seleccion = ttk.Button(self.labelframe[cont], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(cont)) # Boton de seleccion de path de archivo
                 btn_seleccion.grid(column=8, row=1, padx=10, pady=10)
             else:
                 print("DESTRUIR\n")
-                btn_seleccion.destroy()
         except:
             print("error")
 
-
+"""
+Rutina de inicio del menu de configuracion
+"""
     def config(self):
 
-        try:
+        try:    #En caso de que la nueva ventana este abierta, se cierra y reinicia la lista de labelFrames
             self.newWindow.destroy()
             self.labelframe=[]
         except:
             print("Cerrada pestaña abierta")
 
 
-        mov_dict = {'U':0,'D':1,'L':2,'R':3,'X':4}
-        acc_dict = {"VOLUP":0,"VOLDOWN":1,"MUTE":2}
-        # Toplevel object which will
-        # be treated as a new window
+        mov_dict = {'U':0,'D':1,'L':2,'R':3,'X':4}        # Diccionario para paso de codigo a valor (Usado para seleccionar predeterminado)
+        acc_dict = {"VOLUP":0,"VOLDOWN":1,"MUTE":2}       # Diccionario para traduccion en seleccion de accion 
+     
 
         self.newWindow = Toplevel(self.root)
 
-        # sets the title of the
-        # Toplevel widget
+    
 
-        self.newWindow.title("New Window")
+        self.newWindow.title("Menu configuracion")
 
-        # sets the geometry of toplevel
+      
 
 
-        # A Label widget to show in toplevel
-        Label(self.newWindow,text ="This is a new window").grid(row=0, column=0, padx=4, pady=4)
-        print("Esto abre el menu de configuracion")
+        Label(self.newWindow,text ="Este es el menuy de configuracion").grid(row=0, column=0, padx=4, pady=4)
 
 
 
-        with open("acciones.json", 'r') as archivo:
+        with open("acciones.json", 'r') as archivo:        # Cargar acciones registradas en JSON
                 data = json.load(archivo)
 
-        self.pos_dedos = [[None for _ in range(5)] for _ in range(len(data))]
+        self.pos_dedos = [[None for _ in range(5)] for _ in range(len(data))]        # Arrays Nulos donde añadir posiciones, movimientos y acciones
         self.movimiento = [None for _ in range(len(data))]
         self.accion = [None for _ in range(len(data))]
 
@@ -209,9 +216,10 @@ class GUI():
 
             self.accion[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["VOLUP","VOLDOWN","MUTE"])
 
-            if list(data.values())[i] in acc_dict.keys():
+            if list(data.values())[i] in acc_dict.keys():        # Si el valor de la accion i (del JSON) esta dentro del diccionario se pasa del valor seleccionado a su indice
                 idx = acc_dict[list(data.values())[i]]
-            else:
+                
+            else:                                                # Si el valor de la accion i no esta dentro del diccionario, es un path, se añade un nuevo valor seleccionable y se selecciona
                 self.accion[i]['values'] = self.accion[i]['values'] + (f"{list(data.values())[i]}",)
                 idx=len(self.accion[i]['values'])-1
                 btn_seleccion = ttk.Button(self.labelframe[i], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(i))
@@ -220,7 +228,7 @@ class GUI():
             self.accion[i].current(idx)
             self.accion[i].grid(column=7, row=1,padx=10,pady=10)
 
-        self.linea=len(self.labelframe)
+        self.linea=len(self.labelframe)            # Añadir botones de guardar y +
 
         self.btn_anadir = ttk.Button(self.newWindow,text="+", command=self.anadir)
         self.btn_anadir.grid(column=0, row =self.linea+1, padx =1,pady=1)
@@ -231,24 +239,36 @@ class GUI():
  #       self.newWindow.protocol("WM_DELETE_WINDOW", self.mensajito())
         self.newWindow.mainloop()
 
+
+"""
+Rutina de seleccion de archivo, llamado desde boton. Se sustituye el valor de accion por el path del archivo seleccionado
+"""
     def seleccionar_archivo(self,i):
         ruta_archivo = filedialog.askopenfilename()
         if ruta_archivo is not None:
             print(ruta_archivo)
             self.accion[i]=ruta_archivo
-
+"""
         for i in self.accion:
             try:
                 print(i.get())
             except:
                 print(i)
+"""
 
+
+"""
+Funcion para guardar los valores de los arrays al JSON
+
+SE PUEDEN CAMBIAR LOS IF/ELSE POR DICCIONARIOS, QUEDA MAS BONITO Y ES MAS EFICIENTE(CREO)
+
+"""
     def guardar(self):
-
-        new_data = dict()
-        for i in range(len(self.pos_dedos)):
+        
+        new_data = dict()        # El JSON se dumpea desde diccionario
+        for i in range(len(self.pos_dedos)):                # Se recorren los arrays |||| SE PUEDE CAMBIAR EL LEN(...) POR SELF.LINEA
             code =""
-            for j in range(len(self.pos_dedos[i])):
+            for j in range(len(self.pos_dedos[i])):         # Una vuelta por cada dedo
                 if(self.pos_dedos[i][j].get()=='abierto'):
                     code+='0'
                 else:
@@ -267,10 +287,10 @@ class GUI():
 
             print(code)
 
-            if re.match(r'\d{5}[UDLRX]$',code):
+            if re.match(r'\d{5}[UDLRX]$',code):        # Se comprueba que el codigo se haya compuesto de 5 digitos y una de las letras validas 
                 print("Este lo guardo\n")
-                try:
-                        new_data[code]=self.accion[i].get()
+                try:                                   # Se usa un try porque la accion se puede haber guardado como seleccion del COMBOBOX o como valor en array
+                        new_data[code]=self.accion[i].get()        
 
                 except:
                     if self.accion[i] is not None:
@@ -278,6 +298,7 @@ class GUI():
 
         with open('acciones.json', 'w') as archivo:
             json.dump(new_data, archivo)
-        self.gw.load()
+            
+        self.gw.load()            # Se recargan las acciones del programa de hand-tracking
         self.newWindow.destroy()
 
