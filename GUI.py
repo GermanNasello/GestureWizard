@@ -132,7 +132,6 @@ class GUI():
       
 
 
-        Label(self.newWindow,text ="Este es el menuy de configuracion").grid(row=0, column=0, padx=4, pady=4)
 
 
 
