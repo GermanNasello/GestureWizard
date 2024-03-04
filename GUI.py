@@ -25,17 +25,11 @@ class GUI():
 
         self.root.mainloop()
 
-"""
-Cambia la variable de funcionamiento del software de handtracking
-"""
     def toggle_run(self):
         self.gw.toggle()
 #        print("Esto va a cambiar si el programa corre o no")
 
 
-"""
-Añade una linea a la lista de comandos de la configuracion
-"""
     def anadir(self):
         self.linea=len(self.labelframe)
         self.btn_anadir.destroy()
@@ -105,10 +99,6 @@ Añade una linea a la lista de comandos de la configuracion
         self.btn_guardar = ttk.Button(self.newWindow,text="Guardar", command=self.guardar)
         self.btn_guardar.grid(column=2, row =self.linea+1, padx =1,pady=1)
 
-
-"""
-Comprobar si en la linea "cont" el valor de accion seleccionado es OTRO
-"""
     def aparicion_btn(self,cont):
         btn_seleccion=None
         try:            # En algun momento ha fallado, no se porque por lo que pongo un try
@@ -120,9 +110,6 @@ Comprobar si en la linea "cont" el valor de accion seleccionado es OTRO
         except:
             print("error")
 
-"""
-Rutina de inicio del menu de configuracion
-"""
     def config(self):
 
         try:    #En caso de que la nueva ventana este abierta, se cierra y reinicia la lista de labelFrames
@@ -214,7 +201,8 @@ Rutina de inicio del menu de configuracion
             mov_texto=ttk.Label(self.labelframe[i], text="self.accion")
             mov_texto.grid(column=7, row=0, padx=20, pady=20)
 
-            self.accion[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["VOLUP","VOLDOWN","MUTE"])
+            self.accion[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["VOLUP","VOLDOWN","MUTE","OTRO"])
+            self.accion[i].bind("<<ComboboxSelected>>", lambda event, arg1=i: self.aparicion_btn(arg1))  # Al seleccionar un valor se llama a la funcion de aparicion de boton de seleccion
 
             if list(data.values())[i] in acc_dict.keys():        # Si el valor de la accion i (del JSON) esta dentro del diccionario se pasa del valor seleccionado a su indice
                 idx = acc_dict[list(data.values())[i]]
@@ -222,7 +210,7 @@ Rutina de inicio del menu de configuracion
             else:                                                # Si el valor de la accion i no esta dentro del diccionario, es un path, se añade un nuevo valor seleccionable y se selecciona
                 self.accion[i]['values'] = self.accion[i]['values'] + (f"{list(data.values())[i]}",)
                 idx=len(self.accion[i]['values'])-1
-                btn_seleccion = ttk.Button(self.labelframe[i], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(i))
+                btn_seleccion = ttk.Button(self.labelframe[i], text="Seleccionar archivo", command=lambda idxsel = i:self.seleccionar_archivo(idxsel))
                 btn_seleccion.grid(column=8,row=1,padx=10,pady=10)
 
             self.accion[i].current(idx)
@@ -240,29 +228,18 @@ Rutina de inicio del menu de configuracion
         self.newWindow.mainloop()
 
 
-"""
-Rutina de seleccion de archivo, llamado desde boton. Se sustituye el valor de accion por el path del archivo seleccionado
-"""
     def seleccionar_archivo(self,i):
         ruta_archivo = filedialog.askopenfilename()
         if ruta_archivo is not None:
-            print(ruta_archivo)
-            self.accion[i]=ruta_archivo
-"""
-        for i in self.accion:
-            try:
-                print(i.get())
-            except:
-                print(i)
-"""
+            print(f"Ruta_archivo de elemento {i}: {ruta_archivo}")
+            #self.accion[i]=ruta_archivo
+            self.accion[i]['values'] = self.accion[i]['values'] + (f"{ruta_archivo}",)
+            idx=len(self.accion[i]['values'])-1
+            self.accion[i].current(idx)
+            self.accion[i].grid(column=7, row=1,padx=10,pady=10)
 
 
-"""
-Funcion para guardar los valores de los arrays al JSON
 
-SE PUEDEN CAMBIAR LOS IF/ELSE POR DICCIONARIOS, QUEDA MAS BONITO Y ES MAS EFICIENTE(CREO)
-
-"""
     def guardar(self):
         
         new_data = dict()        # El JSON se dumpea desde diccionario
