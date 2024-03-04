@@ -18,29 +18,43 @@ class GUI():
         
         self.root = Tk()
 
-        photo = PhotoImage(file="pausa.png")
+        self.pausa = PhotoImage(file="pausa.png")
+        self.play = PhotoImage(file="play.png")
 
-        Button(self.root, text='Click Me!', image=photo, command=self.toggle_run).grid(row=0, column=0, padx=20, pady=20)
+        self.btn_toggle = Button(self.root, text='Click Me!', image=self.pausa, command=self.toggle_run)
+        self.btn_toggle.grid(row=0, column=0, padx=20, pady=20)
         Button(self.root, text="configuracion", command=self.config).grid(row=0, column=1, padx=20, pady=20)
 
         self.root.mainloop()
 
+
     def toggle_run(self):
         self.gw.toggle()
-#        print("Esto va a cambiar si el programa corre o no")
+        print("Esto va a cambiar si el programa corre o no")
+
+        current_image = self.btn_toggle['image']
+
+        # Dependiendo de la imagen actual, cambiar a la otra imagen
+        if current_image == str(self.play):
+            self.btn_toggle.config(image=self.pausa)
+        else:
+            self.btn_toggle.config(image=self.play)
+
 
 
     def anadir(self):
-        self.linea=len(self.labelframe)
+        print(f"Linea {self.linea}")
+    
         self.btn_anadir.destroy()
-        self.btn_guardar.destroy()   
+        self.btn_guardar.destroy()
 
         self.pos_dedos.append([None,None,None,None,None])
+        print(f"pos {len(self.pos_dedos)}")
         self.movimiento.append(None)
         self.accion.append(None)
 
         self.labelframe.append(ttk.LabelFrame(self.newWindow, text=f"Accion {self.linea + 1}"))
-        self.labelframe[self.linea].grid(row=self.linea+ 1, column=0, padx=10, pady=10)
+        self.labelframe[self.linea].grid(row=self.linea+ 2, column=0, padx=10, pady=10)
 
         pulgar = ttk.Label(self.labelframe[self.linea], text="Dedo pulgar")
         pulgar.grid(column=0, row=0, padx=10, pady=10)
@@ -88,62 +102,102 @@ class GUI():
         mov_texto.grid(column=7, row=0, padx=20, pady=20)
 
         self.accion[self.linea] = ttk.Combobox(self.labelframe[self.linea], state="readonly", values=["VOLUP", "VOLDOWN", "MUTE","OTRO"])
-        self.accion[self.linea].bind("<<ComboboxSelected>>", lambda event, arg1=self.linea: self.aparicion_btn(arg1))  # Al seleccionar un valor se llama a la funcion de aparicion de boton de seleccion
+        self.accion[self.linea].bind("<<ComboboxSelected>>", lambda event, arg1=self.linea: self.aparicion_btn(arg1))
 
         self.accion[self.linea].grid(column=7, row=1, padx=10, pady=10)
 
 
         self.btn_anadir = ttk.Button(self.newWindow,text="+", command=self.anadir)
-        self.btn_anadir.grid(column=0, row =self.linea+2, padx =1,pady=1)
+        self.btn_anadir.grid(column=0, row =self.linea+3, padx =1,pady=1)
 
         self.btn_guardar = ttk.Button(self.newWindow,text="Guardar", command=self.guardar)
         self.btn_guardar.grid(column=2, row =self.linea+1, padx =1,pady=1)
 
+        self.linea+=1
+
     def aparicion_btn(self,cont):
         btn_seleccion=None
-        try:            # En algun momento ha fallado, no se porque por lo que pongo un try
+        try:
             if (self.accion[cont].get()=="OTRO"):
-                btn_seleccion = ttk.Button(self.labelframe[cont], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(cont)) # Boton de seleccion de path de archivo
+                btn_seleccion = ttk.Button(self.labelframe[cont], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(cont))
                 btn_seleccion.grid(column=8, row=1, padx=10, pady=10)
             else:
                 print("DESTRUIR\n")
+                btn_seleccion.destroy()
         except:
             print("error")
 
+    def delete(self,i):
+        print(self.linea)
+        print(i)
+        try:
+
+            self.linea-=1
+            print(self.linea)
+            self.data.pop(list(self.data.keys())[i])
+            self.pos_dedos.pop(i)
+            self.movimiento.pop(i)
+            self.accion.pop(i)
+
+            self.labelframe[i].destroy()
+            
+        except Exception as error:
+            print("Error borrando: ",error)
+    
     def config(self):
 
-        try:    #En caso de que la nueva ventana este abierta, se cierra y reinicia la lista de labelFrames
+        try:
             self.newWindow.destroy()
             self.labelframe=[]
         except:
             print("Cerrada pestaña abierta")
 
 
-        mov_dict = {'U':0,'D':1,'L':2,'R':3,'X':4}        # Diccionario para paso de codigo a valor (Usado para seleccionar predeterminado)
-        acc_dict = {"VOLUP":0,"VOLDOWN":1,"MUTE":2}       # Diccionario para traduccion en seleccion de accion 
-     
+        # Toplevel object which will
+        # be treated as a new window
 
         self.newWindow = Toplevel(self.root)
 
+        # sets the title of the
+        # Toplevel widget
+
+        self.newWindow.title("New Window")
+
+        # sets the geometry of toplevel
+
+
+        # A Label widget to show in toplevel
+        Label(self.newWindow,text ="This is a new window").grid(row=0, column=0, padx=4, pady=4)
+        print("Esto abre el menu de configuracion")
+
+        self.mostrar()
     
+    def mostrar(self):
 
-        self.newWindow.title("Menu configuracion")
+        mov_dict = {'U':0,'D':1,'L':2,'R':3,'X':4}
+        acc_dict = {"VOLUP":0,"VOLDOWN":1,"MUTE":2}
 
-      
+        for i in range(len(self.labelframe)):
+            self.labelframe[i].destroy()
+
+        
+        with open("acciones.json", 'r') as archivo:
+                self.data = json.load(archivo)
+
+        print(f"Len data : {len(self.data)}")
+
+        self.pos_dedos = [[None for _ in range(5)] for _ in range(len(self.data))]
+        self.movimiento = [None for _ in range(len(self.data))]
+        self.accion = [None for _ in range(len(self.data))]
+
+        btn_borrar = [None for _ in range(len(self.data))]
+
+        
+        for i in range(0,len(self.data)):
 
 
 
-
-
-        with open("acciones.json", 'r') as archivo:        # Cargar acciones registradas en JSON
-                data = json.load(archivo)
-
-        self.pos_dedos = [[None for _ in range(5)] for _ in range(len(data))]        # Arrays Nulos donde añadir posiciones, movimientos y acciones
-        self.movimiento = [None for _ in range(len(data))]
-        self.accion = [None for _ in range(len(data))]
-
-        for i in range(0,len(data)):
-
+            
             self.labelframe.append(ttk.LabelFrame(self.newWindow, text=f"self.accion {i+1}"))
             self.labelframe[i].grid(row=i+1, column=0, padx=10, pady=10)
 
@@ -151,7 +205,7 @@ class GUI():
             pulgar.grid(column=0, row=0, padx=10, pady=10)
 
             self.pos_dedos[i][0]=ttk.Combobox(self.labelframe[i],state="readonly",values=["abierto","cerrado"])
-            self.pos_dedos[i][0].current(list(data.keys())[i][0])
+            self.pos_dedos[i][0].current(list(self.data.keys())[i][0])
             self.pos_dedos[i][0].grid(column=0, row=1,padx=10,pady=10)
 
 
@@ -159,7 +213,7 @@ class GUI():
             indice.grid(column=1, row=0, padx=10, pady=10)
 
             self.pos_dedos[i][1]=ttk.Combobox(self.labelframe[i],state="readonly",values=["abierto","cerrado"])
-            self.pos_dedos[i][1].current(list(data.keys())[i][1])
+            self.pos_dedos[i][1].current(list(self.data.keys())[i][1])
             self.pos_dedos[i][1].grid(column=1, row=1,padx=10,pady=10)
 
 
@@ -167,7 +221,7 @@ class GUI():
             corazon.grid(column=2, row=0, padx=10, pady=10)
 
             self.pos_dedos[i][2]=ttk.Combobox(self.labelframe[i],state="readonly",values=["abierto","cerrado"])
-            self.pos_dedos[i][2].current(list(data.keys())[i][2])
+            self.pos_dedos[i][2].current(list(self.data.keys())[i][2])
             self.pos_dedos[i][2].grid(column=2, row=1,padx=10,pady=10)
 
 
@@ -175,7 +229,7 @@ class GUI():
             anular.grid(column=3, row=0, padx=10, pady=10)
 
             self.pos_dedos[i][3]=ttk.Combobox(self.labelframe[i],state="readonly",values=["abierto","cerrado"])
-            self.pos_dedos[i][3].current(list(data.keys())[i][3])
+            self.pos_dedos[i][3].current(list(self.data.keys())[i][3])
             self.pos_dedos[i][3].grid(column=3, row=1,padx=10,pady=10)
 
 
@@ -183,7 +237,7 @@ class GUI():
             menique.grid(column=4, row=0, padx=10, pady=10)
 
             self.pos_dedos[i][4]=ttk.Combobox(self.labelframe[i],state="readonly",values=["abierto","cerrado"])
-            self.pos_dedos[i][4].current(list(data.keys())[i][4])
+            self.pos_dedos[i][4].current(list(self.data.keys())[i][4])
             self.pos_dedos[i][4].grid(column=4, row=1,padx=10,pady=10)
 
 
@@ -192,7 +246,7 @@ class GUI():
             mov_texto.grid(column=5, row=0, padx=20, pady=20)
 
             self.movimiento[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["Arriba","Abajo","Izquierda","Derecha","Cualquiera"])
-            self.movimiento[i].current(mov_dict[list(data.keys())[i][5]])
+            self.movimiento[i].current(mov_dict[list(self.data.keys())[i][5]])
             self.movimiento[i].grid(column=5, row=1,padx=10,pady=10)
 
 
@@ -200,51 +254,53 @@ class GUI():
             mov_texto=ttk.Label(self.labelframe[i], text="self.accion")
             mov_texto.grid(column=7, row=0, padx=20, pady=20)
 
-            self.accion[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["VOLUP","VOLDOWN","MUTE","OTRO"])
-            self.accion[i].bind("<<ComboboxSelected>>", lambda event, arg1=i: self.aparicion_btn(arg1))  # Al seleccionar un valor se llama a la funcion de aparicion de boton de seleccion
+            self.accion[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["VOLUP","VOLDOWN","MUTE"])
 
-            if list(data.values())[i] in acc_dict.keys():        # Si el valor de la accion i (del JSON) esta dentro del diccionario se pasa del valor seleccionado a su indice
-                idx = acc_dict[list(data.values())[i]]
-                
-            else:                                                # Si el valor de la accion i no esta dentro del diccionario, es un path, se añade un nuevo valor seleccionable y se selecciona
-                self.accion[i]['values'] = self.accion[i]['values'] + (f"{list(data.values())[i]}",)
+            if list(self.data.values())[i] in acc_dict.keys():
+                idx = acc_dict[list(self.data.values())[i]]
+            else:
+                self.accion[i]['values'] = self.accion[i]['values'] + (f"{list(self.data.values())[i]}",)
                 idx=len(self.accion[i]['values'])-1
-                btn_seleccion = ttk.Button(self.labelframe[i], text="Seleccionar archivo", command=lambda idxsel = i:self.seleccionar_archivo(idxsel))
+                btn_seleccion = ttk.Button(self.labelframe[i], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(i))
                 btn_seleccion.grid(column=8,row=1,padx=10,pady=10)
 
             self.accion[i].current(idx)
             self.accion[i].grid(column=7, row=1,padx=10,pady=10)
+            
+            btn_borrar[i] = ttk.Button(self.labelframe[i],text="x", command=lambda idx = i:self.delete(idx))
+            btn_borrar[i].grid(column=8, row =0, padx =1,pady=1)
 
-        self.linea=len(self.labelframe)            # Añadir botones de guardar y +
+        self.linea=len(self.labelframe)
 
         self.btn_anadir = ttk.Button(self.newWindow,text="+", command=self.anadir)
         self.btn_anadir.grid(column=0, row =self.linea+1, padx =1,pady=1)
 
         self.btn_guardar = ttk.Button(self.newWindow,text="Guardar", command=self.guardar)
-        self.btn_guardar.grid(column=2, row =self.linea+1, padx =1,pady=1)
+        self.btn_guardar.grid(column=0, row =self.linea+2, padx =1,pady=1)
 
  #       self.newWindow.protocol("WM_DELETE_WINDOW", self.mensajito())
         self.newWindow.mainloop()
 
-
     def seleccionar_archivo(self,i):
         ruta_archivo = filedialog.askopenfilename()
         if ruta_archivo is not None:
-            print(f"Ruta_archivo de elemento {i}: {ruta_archivo}")
-            #self.accion[i]=ruta_archivo
-            self.accion[i]['values'] = self.accion[i]['values'] + (f"{ruta_archivo}",)
-            idx=len(self.accion[i]['values'])-1
-            self.accion[i].current(idx)
-            self.accion[i].grid(column=7, row=1,padx=10,pady=10)
+            print(ruta_archivo)
+            self.accion[i]=ruta_archivo
 
-
+        for i in self.accion:
+            try:
+                print(i.get())
+            except:
+                print(i)
 
     def guardar(self):
-        
-        new_data = dict()        # El JSON se dumpea desde diccionario
-        for i in range(len(self.pos_dedos)):                # Se recorren los arrays |||| SE PUEDE CAMBIAR EL LEN(...) POR SELF.LINEA
+
+        new_data = dict()
+        for i in range(len(self.pos_dedos)):
             code =""
-            for j in range(len(self.pos_dedos[i])):         # Una vuelta por cada dedo
+            
+            for j in range(len(self.pos_dedos[i])):
+                print(f"I J {i} {j}")
                 if(self.pos_dedos[i][j].get()=='abierto'):
                     code+='0'
                 else:
@@ -263,10 +319,10 @@ class GUI():
 
             print(code)
 
-            if re.match(r'\d{5}[UDLRX]$',code):        # Se comprueba que el codigo se haya compuesto de 5 digitos y una de las letras validas 
+            if re.match(r'\d{5}[UDLRX]$',code):
                 print("Este lo guardo\n")
-                try:                                   # Se usa un try porque la accion se puede haber guardado como seleccion del COMBOBOX o como valor en array
-                        new_data[code]=self.accion[i].get()        
+                try:
+                        new_data[code]=self.accion[i].get()
 
                 except:
                     if self.accion[i] is not None:
@@ -274,7 +330,6 @@ class GUI():
 
         with open('acciones.json', 'w') as archivo:
             json.dump(new_data, archivo)
-            
-        self.gw.load()            # Se recargan las acciones del programa de hand-tracking
+        self.gw.load()
         self.newWindow.destroy()
 

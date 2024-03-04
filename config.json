@@ -1,6 +1,6 @@
 {
-	"humbral_inicio" : 10,
-	"humbral_fin" : 10	,
+	"humbral_inicio" : 2,
+	"humbral_fin" : 2,
 	"min_detection_confidence":0.5,
 	"min_tracking_confidence":0.5
 }

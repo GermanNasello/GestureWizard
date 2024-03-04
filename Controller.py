@@ -1,6 +1,6 @@
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume, ISimpleAudioVolume
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
 
 class Controller():
@@ -13,19 +13,14 @@ class Controller():
     self.volume.SetMasterVolumeLevelScalar(v,None)
 
   def mute(self):
- #     current_volume = self.volume.GetMasterVolumeLevelScalar()
-  #    new_volume = 0
-   #   self.volume.SetMasterVolumeLevelScalar(new_volume, None
-       
+      current_volume = self.volume.GetMasterVolumeLevelScalar()
+      new_volume = 0
+      self.volume.SetMasterVolumeLevelScalar(new_volume, None)
   
-      muted = self.volume.GetMute()
-      self.volume.SetMute(not muted, None)
-
-
   def subir_volumen(self):
       try:
         current_volume = self.volume.GetMasterVolumeLevelScalar()
-        new_volume = current_volume+0.10  # 70% del volumen máximo
+        new_volume = current_volume+0.35  # 70% del volumen máximo
         self.volume.SetMasterVolumeLevelScalar(new_volume, None)
       except:
         self.volume.SetMasterVolumeLevelScalar(1, None)
@@ -34,7 +29,7 @@ class Controller():
   def bajar_volumen(self):
       try:
         current_volume = self.volume.GetMasterVolumeLevelScalar()
-        new_volume = current_volume-0.10# 70% del volumen máximo
+        new_volume = current_volume-0.35# 70% del volumen máximo
         self.volume.SetMasterVolumeLevelScalar(new_volume, None)
       except:
         self.volume.SetMasterVolumeLevelScalar(0, None)
