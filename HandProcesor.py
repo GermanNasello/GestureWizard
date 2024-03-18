@@ -72,7 +72,7 @@ class Hand():
         return "L"
     else:
       if (self.movimiento[1]>0):
-        return "U"
-      else:
         return "D"
+      else:
+        return "U"
      

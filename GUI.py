@@ -1,4 +1,5 @@
 from tkinter import *
+import tkinter as tk
 from tkinter import ttk, filedialog
 import json
 import re
@@ -18,24 +19,30 @@ class GUI():
         
         self.root = Tk()
 
-        photo = PhotoImage(file="pausa.png")
 
-        Button(self.root, text='Click Me!', image=photo, command=self.toggle_run).grid(row=0, column=0, padx=20, pady=20)
+        self.pausa = PhotoImage(file="pausa.png")
+        self.play = PhotoImage(file="play.png")
+
+        self.btn_toggle = Button(self.root, text='Click Me!', image=self.pausa, command=self.toggle_run)
+        self.btn_toggle.grid(row=0, column=0, padx=20, pady=20)
         Button(self.root, text="configuracion", command=self.config).grid(row=0, column=1, padx=20, pady=20)
 
         self.root.mainloop()
 
-"""
-Cambia la variable de funcionamiento del software de handtracking
-"""
+
     def toggle_run(self):
         self.gw.toggle()
-#        print("Esto va a cambiar si el programa corre o no")
+        print("Esto va a cambiar si el programa corre o no")
+
+        current_image = self.btn_toggle['image']
+
+        # Dependiendo de la imagen actual, cambiar a la otra imagen
+        if current_image == str(self.play):
+            self.btn_toggle.config(image=self.pausa)
+        else:
+            self.btn_toggle.config(image=self.play)
 
 
-"""
-Añade una linea a la lista de comandos de la configuracion
-"""
     def anadir(self):
         self.linea=len(self.labelframe)
         self.btn_anadir.destroy()
@@ -45,7 +52,7 @@ Añade una linea a la lista de comandos de la configuracion
         self.movimiento.append(None)
         self.accion.append(None)
 
-        self.labelframe.append(ttk.LabelFrame(self.newWindow, text=f"Accion {self.linea + 1}"))
+        self.labelframe.append(ttk.LabelFrame(self.labels, text=f"Accion {self.linea + 1}"))
         self.labelframe[self.linea].grid(row=self.linea+ 1, column=0, padx=10, pady=10)
 
         pulgar = ttk.Label(self.labelframe[self.linea], text="Dedo pulgar")
@@ -105,10 +112,6 @@ Añade una linea a la lista de comandos de la configuracion
         self.btn_guardar = ttk.Button(self.newWindow,text="Guardar", command=self.guardar)
         self.btn_guardar.grid(column=2, row =self.linea+1, padx =1,pady=1)
 
-
-"""
-Comprobar si en la linea "cont" el valor de accion seleccionado es OTRO
-"""
     def aparicion_btn(self,cont):
         btn_seleccion=None
         try:            # En algun momento ha fallado, no se porque por lo que pongo un try
@@ -120,9 +123,6 @@ Comprobar si en la linea "cont" el valor de accion seleccionado es OTRO
         except:
             print("error")
 
-"""
-Rutina de inicio del menu de configuracion
-"""
     def config(self):
 
         try:    #En caso de que la nueva ventana este abierta, se cierra y reinicia la lista de labelFrames
@@ -138,16 +138,23 @@ Rutina de inicio del menu de configuracion
 
         self.newWindow = Toplevel(self.root)
 
-    
-
         self.newWindow.title("Menu configuracion")
-
       
 
+        self.scrollbar = tk.Scrollbar(self.newWindow, orient=tk.VERTICAL)
+        self.canvas = tk.Canvas(self.newWindow,height=self.newWindow.winfo_screenheight()*2/3, bd=0, highlightthickness=0,yscrollcommand=self.scrollbar.set)
 
-        Label(self.newWindow,text ="Este es el menuy de configuracion").grid(row=0, column=0, padx=4, pady=4)
 
+        self.scrollbar.grid(column=1,row=0, sticky="nsew")
+        self.canvas.grid(column=0,row=0,sticky="nsew")
 
+        self.scrollbar.config(command=self.canvas.yview)    
+
+        self.labels = ttk.Frame(self.canvas)
+        self.interior_id = self.canvas.create_window(0, 0, window=self.labels,anchor='nw')
+
+        self.labels.bind('<Configure>', self.config_interior)
+        self.canvas.bind('<Configure>', self.config_canvas)
 
         with open("acciones.json", 'r') as archivo:        # Cargar acciones registradas en JSON
                 data = json.load(archivo)
@@ -158,7 +165,7 @@ Rutina de inicio del menu de configuracion
 
         for i in range(0,len(data)):
 
-            self.labelframe.append(ttk.LabelFrame(self.newWindow, text=f"self.accion {i+1}"))
+            self.labelframe.append(ttk.LabelFrame(self.labels, text=f"Accion {i+1}"))
             self.labelframe[i].grid(row=i+1, column=0, padx=10, pady=10)
 
             pulgar=ttk.Label(self.labelframe[i], text="Dedo pulgar")
@@ -214,7 +221,8 @@ Rutina de inicio del menu de configuracion
             mov_texto=ttk.Label(self.labelframe[i], text="self.accion")
             mov_texto.grid(column=7, row=0, padx=20, pady=20)
 
-            self.accion[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["VOLUP","VOLDOWN","MUTE"])
+            self.accion[i]=ttk.Combobox(self.labelframe[i],state="readonly",values=["VOLUP","VOLDOWN","MUTE","OTRO"])
+            self.accion[i].bind("<<ComboboxSelected>>", lambda event, arg1=i: self.aparicion_btn(arg1))  # Al seleccionar un valor se llama a la funcion de aparicion de boton de seleccion
 
             if list(data.values())[i] in acc_dict.keys():        # Si el valor de la accion i (del JSON) esta dentro del diccionario se pasa del valor seleccionado a su indice
                 idx = acc_dict[list(data.values())[i]]
@@ -222,7 +230,7 @@ Rutina de inicio del menu de configuracion
             else:                                                # Si el valor de la accion i no esta dentro del diccionario, es un path, se añade un nuevo valor seleccionable y se selecciona
                 self.accion[i]['values'] = self.accion[i]['values'] + (f"{list(data.values())[i]}",)
                 idx=len(self.accion[i]['values'])-1
-                btn_seleccion = ttk.Button(self.labelframe[i], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(i))
+                btn_seleccion = ttk.Button(self.labelframe[i], text="Seleccionar archivo", command=lambda idxsel = i:self.seleccionar_archivo(idxsel))
                 btn_seleccion.grid(column=8,row=1,padx=10,pady=10)
 
             self.accion[i].current(idx)
@@ -240,29 +248,18 @@ Rutina de inicio del menu de configuracion
         self.newWindow.mainloop()
 
 
-"""
-Rutina de seleccion de archivo, llamado desde boton. Se sustituye el valor de accion por el path del archivo seleccionado
-"""
     def seleccionar_archivo(self,i):
         ruta_archivo = filedialog.askopenfilename()
         if ruta_archivo is not None:
-            print(ruta_archivo)
-            self.accion[i]=ruta_archivo
-"""
-        for i in self.accion:
-            try:
-                print(i.get())
-            except:
-                print(i)
-"""
+            print(f"Ruta_archivo de elemento {i}: {ruta_archivo}")
+            #self.accion[i]=ruta_archivo
+            self.accion[i]['values'] = self.accion[i]['values'] + (f"{ruta_archivo}",)
+            idx=len(self.accion[i]['values'])-1
+            self.accion[i].current(idx)
+            self.accion[i].grid(column=7, row=1,padx=10,pady=10)
 
 
-"""
-Funcion para guardar los valores de los arrays al JSON
 
-SE PUEDEN CAMBIAR LOS IF/ELSE POR DICCIONARIOS, QUEDA MAS BONITO Y ES MAS EFICIENTE(CREO)
-
-"""
     def guardar(self):
         
         new_data = dict()        # El JSON se dumpea desde diccionario
@@ -302,3 +299,15 @@ SE PUEDEN CAMBIAR LOS IF/ELSE POR DICCIONARIOS, QUEDA MAS BONITO Y ES MAS EFICIE
         self.gw.load()            # Se recargan las acciones del programa de hand-tracking
         self.newWindow.destroy()
 
+    def config_interior(self, event):
+        # Update the scrollbars to match the size of the inner frame.
+        size = (self.labels.winfo_reqwidth(), self.labels.winfo_reqheight())
+        self.canvas.config(scrollregion="0 0 %s %s" % size)
+        if self.labels.winfo_reqwidth() != self.canvas.winfo_width():
+            # Update the canvas's width to fit the inner frame.
+            self.canvas.config(width=self.labels.winfo_reqwidth())
+
+    def config_canvas(self,event):
+        if self.labels.winfo_reqwidth() != self.canvas.winfo_width():
+            # Update the inner frame's width to fill the canvas.
+            self.canvas.itemconfigure(self.interior_id, width=self.canvas.winfo_width())

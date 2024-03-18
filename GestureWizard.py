@@ -3,20 +3,18 @@ import mediapipe as mp
 import Controller
 import HandProcesor
 import json
+import os
+import subprocess
+
 
 class GestureWizard():
 
-    """     
-    Funcion de cambio de estado de ejecucion
-    """
     def toggle(self):
         self.running = not self.running
         print(f"El programa esta en funcionamiento: {self.running}")
 
 
-    """
-    Cargar la configuracion y las acciones desde los JSON 
-    """
+    
     def load(self):
         print("Cargando config")
         with open("config.json", "r") as archivo_json:
@@ -38,10 +36,7 @@ class GestureWizard():
                 self.catalogo_gestos[key[:5] + 'D'] = self.catalogo_gestos[key]
 
 
-                
-    """
-    Rutina de inicio, creacion de variables, cargar configuracion
-    """
+       
     def __init__(self):
         print("CARGANDO LA MAGIA")
         self.mp_drawing = mp.solutions.drawing_utils
@@ -134,7 +129,7 @@ class GestureWizard():
                 if (self.return_counter <= 0 and self.funcionando != None):
                     print("Fin por fuera de foco")
                     self.fin()
-            cv2.imshow("GestureWizard", image)
+            #cv2.imshow("GestureWizard", image)
             cv2.waitKey(2)
 
     def fin(self):
@@ -153,7 +148,10 @@ class GestureWizard():
                 self.controller.mute()
             else:
                 path = self.catalogo_gestos[gesto_completo]
+                #path = path.replace(" ","\ ")
                 print(f"Se ejecuta el os.system({path})")
-                
+         
+                #os.system("start "+path)
+                subprocess.Popen(["start","",path],shell=True)
         
         self.funcionando = None
