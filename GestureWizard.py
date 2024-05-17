@@ -44,10 +44,12 @@ class GestureWizard():
         self.mphands = mp.solutions.hands
         self.mppose = mp.solutions.pose
         self.catalogo_gestos = []
+        self.mostrar = False
 
+        
         self.load()
 
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
         self.manos = self.mphands.Hands(min_detection_confidence=self.min_detection_confidence, min_tracking_confidence=self.min_tracking_confidence)
         self.pose = self.mppose.Pose()
 
@@ -61,6 +63,10 @@ class GestureWizard():
         self.return_counter = self.humbral_fin
 
         self.running=True
+
+    def toggle_mostrar(self):
+        self.mostrar = not self.mostrar
+        
 
     """
     Ejecucion principal del programa, captura una imagen, detecta manos, comprueba posicion de las manos,
@@ -103,7 +109,6 @@ class GestureWizard():
                             self.fin()
 
                     else:
-                        print("Guardando posicion")
                         self.hp.guardarPosicion(self.master, 0)
                         self.return_counter = self.humbral_fin
 
@@ -126,14 +131,20 @@ class GestureWizard():
                 self.return_counter-=1
                 for key in self.contador.keys():
                     self.contador[key]-=1
+                    if self.contador[key]<0:
+                        self.contador[key]=0
                 if (self.return_counter <= 0 and self.funcionando != None):
-                    print("Fin por fuera de foco")
                     self.fin()
-            #cv2.imshow("GestureWizard", image)
+            if self.mostrar:
+                cv2.imshow("GestureWizard", image)
+            else:
+                try:
+                    cv2.destroyWindow("GestureWizard")
+                except:
+                    pass
             cv2.waitKey(2)
 
     def fin(self):
-        print("Fin de trackeo, procesar movimiento")
         movimiento = self.hp.procesarMovimiento()
         gesto_completo=self.funcionando+movimiento
 
@@ -149,7 +160,6 @@ class GestureWizard():
             else:
                 path = self.catalogo_gestos[gesto_completo]
                 #path = path.replace(" ","\ ")
-                print(f"Se ejecuta el os.system({path})")
          
                 #os.system("start "+path)
                 subprocess.Popen(["start","",path],shell=True)

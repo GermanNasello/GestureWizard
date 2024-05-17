@@ -1,10 +1,19 @@
 from tkinter import *
+from tkinter import messagebox
 import tkinter as tk
 from tkinter import ttk, filedialog
 import json
 import re
 import GestureWizard
+import sys
 
+class StdoutRedirector:
+    def __init__(self, text_widget):
+        self.text_space = text_widget
+
+    def write(self, string):
+        self.text_space.insert("end", string)
+        self.text_space.see("end")
 
 class GUI():
 
@@ -23,16 +32,29 @@ class GUI():
         self.pausa = PhotoImage(file="pausa.png")
         self.play = PhotoImage(file="play.png")
 
+
+        Button(self.root, text="Configurar Gestos", command=self.config).grid(row=0, column=0, padx=5, pady=5)
+        Button(self.root, text="Configurar parametros", command=self.parametros).grid(row=1, column=0, padx=5, pady=5)
+        Button(self.root, text="Mostrar/Ocultar Cámara", command=self.gw.toggle_mostrar).grid(row=2, column=0, padx=5, pady=5)
+        
+
+
+
         self.btn_toggle = Button(self.root, text='Click Me!', image=self.pausa, command=self.toggle_run)
-        self.btn_toggle.grid(row=0, column=0, padx=20, pady=20)
-        Button(self.root, text="configuracion", command=self.config).grid(row=0, column=1, padx=20, pady=20)
+        self.btn_toggle.grid(row=5, column=0, padx=20, pady=20)
+
+
+        text_widget = tk.Text(self.root, height=4)
+        text_widget.grid(row=6,column=0)
+
+        # Redirigir stdout al widget Text
+        sys.stdout = StdoutRedirector(text_widget)
 
         self.root.mainloop()
 
 
     def toggle_run(self):
         self.gw.toggle()
-        print("Esto va a cambiar si el programa corre o no")
 
         current_image = self.btn_toggle['image']
 
@@ -45,6 +67,7 @@ class GUI():
 
     def anadir(self):
         self.linea=len(self.labelframe)
+        
         self.btn_anadir.destroy()
         self.btn_guardar.destroy()   
 
@@ -105,12 +128,17 @@ class GUI():
 
         self.accion[self.linea].grid(column=7, row=1, padx=10, pady=10)
 
+        
+        btn_borrar = ttk.Button(self.labelframe[self.linea], text='X', command = lambda idx = self.linea: self.borrar_accion_vacia(idx)).grid(column=8,row=0,padx=10,pady=10)      
 
-        self.btn_anadir = ttk.Button(self.newWindow,text="+", command=self.anadir)
+        self.btn_anadir = ttk.Button(self.ventana_gestos,text="+", command=self.anadir)
         self.btn_anadir.grid(column=0, row =self.linea+2, padx =1,pady=1)
 
-        self.btn_guardar = ttk.Button(self.newWindow,text="Guardar", command=self.guardar)
+        self.btn_guardar = ttk.Button(self.ventana_gestos,text="Guardar", command=self.guardar)
         self.btn_guardar.grid(column=0, row =self.linea+3, padx =1,pady=1)
+
+        
+        self.linea+=1
 
     def aparicion_btn(self,cont):
         btn_seleccion=None
@@ -118,22 +146,84 @@ class GUI():
             if (self.accion[cont].get()=="OTRO"):
                 btn_seleccion = ttk.Button(self.labelframe[cont], text="Seleccionar archivo", command=lambda:self.seleccionar_archivo(cont)) # Boton de seleccion de path de archivo
                 btn_seleccion.grid(column=8, row=1, padx=10, pady=10)
-            else:
-                print("DESTRUIR\n")
+            
         except:
-            print("error")
+            pass
+            
 
+    def parametros(self):
+        
+        try:    #En caso de que la nueva ventana este abierta, se cierra y reinicia la lista de labelFrames
+            self.ventana_parametros.destroy()
+        except:
+            pass
+
+        self.ventana_parametros = Toplevel(self.root)
+        self.ventana_parametros.title("Ventana de configuracion de parametros")
+        
+        with open("config.json", 'r') as archivo:        # Cargar acciones registradas en JSON
+                parametros = json.load(archivo)
+
+        
+        Label(self.ventana_parametros, text = "Umbral inicio").grid(column=0,row=0)
+        self.umbral_inicio = Entry(self.ventana_parametros,width=20)
+        self.umbral_inicio.grid(column=2,row=0)
+        self.umbral_inicio.delete(0,tk.END)
+        self.umbral_inicio.insert(0, str(parametros['humbral_inicio']))
+
+        
+        Label(self.ventana_parametros, text = "Umbral fin").grid(column=0,row=1)
+        self.umbral_fin = Entry(self.ventana_parametros,width=20)
+        self.umbral_fin.grid(column=2,row=1)
+        self.umbral_fin.delete(0,tk.END)
+        self.umbral_fin.insert(0, str(parametros['humbral_fin']))
+        
+        Label(self.ventana_parametros, text = "Confianza minima de deteccion").grid(column=0,row=2)
+        self.min_detection_confidence = Entry(self.ventana_parametros,width=20)
+        self.min_detection_confidence.grid(column=2,row=2)
+        self.min_detection_confidence.delete(0,tk.END)
+        self.min_detection_confidence.insert(0, str(parametros['min_detection_confidence']))        
+        
+        Label(self.ventana_parametros, text = "Confianza minima de trackeo").grid(column=0,row=3)
+        self.min_tracking_confidence = Entry(self.ventana_parametros,width=20)
+        self.min_tracking_confidence.grid(column=2,row=3)
+        self.min_tracking_confidence.delete(0,tk.END)
+        self.min_tracking_confidence.insert(0, str(parametros['min_tracking_confidence']))
+
+        btn_guardar_param = ttk.Button(self.ventana_parametros,text="Guardar", command=self.guardar_param)
+
+        btn_guardar_param.grid(column=1,row=4)        
+    def guardar_param(self):
+        
+        new_data = dict()        # El JSON se dumpea desde diccionario
+        try:
+            new_data['humbral_inicio']=float(self.umbral_inicio.get())
+            new_data['humbral_fin']=float(self.umbral_fin.get())
+            new_data['min_detection_confidence']=float(self.min_detection_confidence.get())
+            new_data['min_tracking_confidence']=float(self.min_tracking_confidence.get())
+            
+            with open('config.json', 'w') as archivo:
+                json.dump(new_data, archivo)
+        except Exception as e:
+    
+            messagebox.showinfo(message="Los valores tienen que ser numeros enteros", title="ADVERTENCIA")
+            
+            
+        self.gw.load()            # Se recargan las acciones del programa de hand-tracking
+        self.ventana_parametros.destroy()
+
+        
     def config(self):
 
         
         try:    #En caso de que la nueva ventana este abierta, se cierra y reinicia la lista de labelFrames
-            self.newWindow.destroy()
+            self.ventana_gestos.destroy()
         except:
             print("Cerrada pestaña abierta")
 
-        self.newWindow = Toplevel(self.root)
+        self.ventana_gestos = Toplevel(self.root)
 
-        self.newWindow.title("Menu configuracion")
+        self.ventana_gestos.title("Menu configuracion")
         
         self.mov_dict = {'U':0,'D':1,'L':2,'R':3,'X':4}        # Diccionario para paso de codigo a valor (Usado para seleccionar predeterminado)
         self.acc_dict = {"VOLUP":0,"VOLDOWN":1,"MUTE":2}       # Diccionario para traduccion en seleccion de accion
@@ -145,12 +235,11 @@ class GUI():
         
     def mostrar_config(self):
   
-
       
         self.labelframe=[]
 
-        self.scrollbar = tk.Scrollbar(self.newWindow, orient=tk.VERTICAL)
-        self.canvas = tk.Canvas(self.newWindow,height=self.newWindow.winfo_screenheight()*2/3, bd=0, highlightthickness=0,yscrollcommand=self.scrollbar.set)
+        self.scrollbar = tk.Scrollbar(self.ventana_gestos, orient=tk.VERTICAL)
+        self.canvas = tk.Canvas(self.ventana_gestos,height=self.ventana_gestos.winfo_screenheight()*2/3, bd=0, highlightthickness=0,yscrollcommand=self.scrollbar.set)
 
 
         self.scrollbar.grid(column=1,row=0, sticky="nsew")
@@ -168,7 +257,6 @@ class GUI():
         self.movimiento = [None for _ in range(len(self.data))]
         self.accion = [None for _ in range(len(self.data))]
                 
-
         for i in range(0,len(self.data)):
 
             self.labelframe.append(ttk.LabelFrame(self.labels, text=f"Accion {i+1}"))
@@ -244,27 +332,35 @@ class GUI():
             self.accion[i].grid(column=7, row=1,padx=10,pady=10)
 
         self.linea=len(self.labelframe)            # Añadir botones de guardar y +
-        print(self.linea)
-        self.btn_anadir = ttk.Button(self.newWindow,text="+", command=self.anadir)
+      
+        self.btn_anadir = ttk.Button(self.ventana_gestos,text="+", command=self.anadir)
         self.btn_anadir.grid(column=0, row =self.linea+1, padx =1,pady=1)
 
-        self.btn_guardar = ttk.Button(self.newWindow,text="Guardar", command=self.guardar)
+        self.btn_guardar = ttk.Button(self.ventana_gestos,text="Guardar", command=self.guardar)
         self.btn_guardar.grid(column=0, row =self.linea+2, padx =1,pady=1)
 
- #       self.newWindow.protocol("WM_DELETE_WINDOW", self.mensajito())
-        self.newWindow.mainloop()
+ #       self.ventana_gestos.protocol("WM_DELETE_WINDOW", self.mensajito())
+        self.ventana_gestos.mainloop()
 
 
     def borrar_accion(self,idx):
 
         self.data.pop(list(self.data.keys())[idx])
-        print(self.linea)
+       
         self.linea -=1
-        print(self.linea)
+        
 
         self.btn_guardar.destroy()
         self.btn_anadir.destroy()
+
         self.mostrar_config()
+        
+    def borrar_accion_vacia(self,idx):
+
+        self.labelframe[idx].destroy()
+        self.linea-=1
+        self.btn_anadir.grid(column=0, row =self.linea+2, padx =1,pady=1)
+        self.btn_guardar.grid(column=0, row =self.linea+3, padx =1,pady=1)
 
         
     def seleccionar_archivo(self,i):
@@ -282,41 +378,44 @@ class GUI():
     def guardar(self):
         
         new_data = dict()        # El JSON se dumpea desde diccionario
-        for i in range(len(self.pos_dedos)):                # Se recorren los arrays |||| SE PUEDE CAMBIAR EL LEN(...) POR SELF.LINEA
-            code =""
-            for j in range(len(self.pos_dedos[i])):         # Una vuelta por cada dedo
-                if(self.pos_dedos[i][j].get()=='abierto'):
-                    code+='0'
-                else:
-                    code+='1'
+        try:
+            for i in range(len(self.pos_dedos)):                # Se recorren los arrays |||| SE PUEDE CAMBIAR EL LEN(...) POR SELF.LINEA
+                code =""
+                for j in range(len(self.pos_dedos[i])):         # Una vuelta por cada dedo
+                    if(self.pos_dedos[i][j].get()=='abierto'):
+                        code+='0'
+                    else:
+                        code+='1'
 
-            if (self.movimiento[i].get() == 'Arriba'):
-                code+='U'
-            elif (self.movimiento[i].get() == 'Abajo'):
-                code+='D'
-            elif (self.movimiento[i].get() == 'Izquierda'):
-                code+='L'
-            elif (self.movimiento[i].get() == 'Derecha'):
-                code+='R'
-            elif (self.movimiento[i].get() == 'Cualquiera'):
-                code+='X'
+                if (self.movimiento[i].get() == 'Arriba'):
+                    code+='U'
+                elif (self.movimiento[i].get() == 'Abajo'):
+                    code+='D'
+                elif (self.movimiento[i].get() == 'Izquierda'):
+                    code+='L'
+                elif (self.movimiento[i].get() == 'Derecha'):
+                    code+='R'
+                elif (self.movimiento[i].get() == 'Cualquiera'):
+                    code+='X'
 
-            print(code)
+                
 
-            if re.match(r'\d{5}[UDLRX]$',code):        # Se comprueba que el codigo se haya compuesto de 5 digitos y una de las letras validas 
-                print("Este lo guardo\n")
-                try:                                   # Se usa un try porque la accion se puede haber guardado como seleccion del COMBOBOX o como valor en array
-                        new_data[code]=self.accion[i].get()        
+                if re.match(r'\d{5}[UDLRX]$',code):        # Se comprueba que el codigo se haya compuesto de 5 digitos y una de las letras validas 
+                   
+                    try:                                   # Se usa un try porque la accion se puede haber guardado como seleccion del COMBOBOX o como valor en array
+                            new_data[code]=self.accion[i].get()        
 
-                except:
-                    if self.accion[i] is not None:
-                        new_data[code]=self.accion[i]
-
+                    except:
+                        if self.accion[i] is not None:
+                            new_data[code]=self.accion[i]
+        except:
+            pass
+        
         with open('acciones.json', 'w') as archivo:
             json.dump(new_data, archivo)
             
         self.gw.load()            # Se recargan las acciones del programa de hand-tracking
-        self.newWindow.self.acc_dict()
+        self.ventana_gestos.destroy()
 
     def config_interior(self, event):
         # Update the scrollbars to match the size of the inner frame.

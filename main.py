@@ -24,5 +24,4 @@ hilo.start()
 hilo2.start()
 
 hilo.join()
-hilo2.join()
 

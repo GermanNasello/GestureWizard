@@ -63,8 +63,6 @@ class Hand():
       self.movimiento[0]+= self.posiciones[i][0]-self.posiciones[i-1][0]
       self.movimiento[1]+= self.posiciones[i][1]-self.posiciones[i-1][1]
     self.posiciones=[]
-    print(f"Movimiento en 0: {abs(self.movimiento[0])}\n ")
-    print(f"Movimiento en 1: {abs(self.movimiento[1])}")
     if abs(self.movimiento[0]) > abs(self.movimiento[1]):
       if(self.movimiento[0]>0):
         return "R"
